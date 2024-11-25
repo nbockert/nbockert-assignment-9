@@ -125,11 +125,14 @@ def update(frame, mlp, ax_input, ax_hidden, ax_gradient, X, y):
         hidden_features[:, 0], hidden_features[:, 1], hidden_features[:, 2],
         c=y.ravel(), cmap='bwr', alpha=0.7
     )
-
+    ax_hidden.set_xlabel('Hidden Node 1')
+    ax_hidden.set_ylabel('Hidden Node 2')
+    ax_hidden.set_zlabel('Hidden Node 3')
     # TODO: Hyperplane visualization in the hidden space
     x_hidden = np.linspace(hidden_features[:, 0].min(), hidden_features[:, 0].max(), 50)
     y_hidden = np.linspace(hidden_features[:, 1].min(), hidden_features[:, 1].max(), 50)
     x_mesh, y_mesh = np.meshgrid(x_hidden, y_hidden)
+
     w1, w2, w3 = mlp.W2[:, 0]
     b = mlp.b2[0, 0]
     z_mesh = -(w1 * x_mesh + w2 * y_mesh + b) / (w3 + 1e-8)
@@ -142,19 +145,29 @@ def update(frame, mlp, ax_input, ax_hidden, ax_gradient, X, y):
     
 
     # TODO: Plot input layer decision boundary
-    xx = np.linspace(-3, 3, 100)
-    yy = np.linspace(-3, 3, 100)
+    xx = np.linspace(-3, 3, 200)
+    yy = np.linspace(-3, 3, 200)
     XX, YY = np.meshgrid(xx, yy)
+    
     input_points = np.column_stack((XX.ravel(), YY.ravel()))
-    hidden_transformed = np.tanh(np.dot(input_points, mlp.W1) + mlp.b1) 
+    # hidden_transformed = np.tanh(np.dot(input_points, mlp.W1) + mlp.b1) 
     Z = mlp.forward(input_points).reshape(XX.shape)
-    ax_input.contourf(XX, YY, Z, levels=1, colors=['blue', 'red'], alpha=0.2)
+    ax_input.contourf(XX, YY, Z, levels=[-1, 0, 1], cmap='bwr', alpha=0.6)
+    # ax_input.contourf(XX, YY, Z, levels=1, colors=['blue', 'red'], alpha=0.2)
+    theta = np.linspace(0, 2 * np.pi, 200)
+    radius = np.sqrt(1)  # Assume boundary radius
+    circle_x = radius * np.cos(theta)
+    circle_y = radius * np.sin(theta)
+    ax_input.plot(circle_x, circle_y, color='black', linestyle='--', linewidth=1)
     ax_input.scatter(X[y.ravel() == -1, 0], X[y.ravel() == -1, 1], 
                     c='blue', alpha=0.7, s=20)
     ax_input.scatter(X[y.ravel() == 1, 0], X[y.ravel() == 1, 1], 
                     c='red', alpha=0.7, s=20)
     ax_input.set_xlim(-3, 3)
     ax_input.set_ylim(-2, 2)
+    ax_input.set_title(f"Input Space at Step {frame * 10}", fontsize=12)
+    ax_input.set_xlabel("Feature 1")
+    ax_input.set_ylabel("Feature 2")
 
 
     # TODO: Visualize features and gradients as nodes and edges 
@@ -180,13 +193,13 @@ def update(frame, mlp, ax_input, ax_hidden, ax_gradient, X, y):
     # Input to hidden connections
     for i_pos in [pos['x1'], pos['x2']]:
         for h_pos in [pos['h1'], pos['h2'], pos['h3']]:
-            width = 5.0 * grad_w1 / (grad_w1.max() + 1e-8)
+            width = 1+5.0 * grad_w1 / (grad_w1.max() + 1e-8)
             ax_gradient.plot([i_pos[0], h_pos[0]], [i_pos[1], h_pos[1]], 
                            'purple', alpha=0.3, linewidth=width)
 
     # Hidden to output connections
     for h_pos in [pos['h1'], pos['h2'], pos['h3']]:
-        width = 5.0 * grad_w2 / (grad_w2.max() + 1e-8)
+        width = 1+5.0 * grad_w2 / (grad_w2.max() + 1e-8)
         ax_gradient.plot([h_pos[0], pos['y'][0]], [h_pos[1], pos['y'][1]], 
                         'purple', alpha=0.6, linewidth=width)
 
